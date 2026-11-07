@@ -167,6 +167,7 @@ async function start(){
   if (pool.length < 4){ $("loadMsg").textContent = "N-am găsit destule manele. Verifică netul sau alege mai mulți artiști."; return; }
   $("loadMsg").textContent = "";
   rounds = shuffle([...pool]).slice(0, Math.min(ROUNDS, pool.length));
+  track("joc-inceput", "Joc început");
   r = 0; score = 0;
   $("home").classList.add("hidden"); $("end").classList.add("hidden"); $("game").classList.remove("hidden");
   setupRound();
@@ -282,11 +283,17 @@ function next(){
   setupRound();
 }
 
+// statistici GoatCounter (fără cookie-uri); merge și dacă e blocat de adblock
+function track(path, title){
+  try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path, title, event:true}); } catch(e){}
+}
+
 function finish(){
   stopAudio();
   $("game").classList.add("hidden"); $("end").classList.remove("hidden");
   const max = rounds.length * POINTS[0];
   $("final").textContent = `${score}/${max}`;
+  track("joc-terminat", `Scor ${score}/${max}`);
   const p = score/max;
   $("verdict").textContent = p >= .8 ? "Ești regele nunților! 👑" : p >= .5 ? "Te descurci, ai fost la câteva botezuri 🥂" : p >= .2 ? "Mai ascultă Salam pe drum 🚗" : "Tu asculți doar muzică clasică, recunoaște 🎻";
 }
@@ -343,5 +350,6 @@ $("moreBtn").onclick = skip;
 $("guessForm").onsubmit = submitGuess;
 $("nextBtn").onclick = next;
 </script>
+<script data-goatcounter="https://traian.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
