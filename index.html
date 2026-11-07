@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghicește Maneaua</title>
+<style>
+  :root{--bg:#12061f;--card:#1f0d35;--gold:#ffcc33;--pink:#ff3fa4;--txt:#f6eefe;--muted:#b9a6d3;--ok:#2ecc71;--bad:#ff4d4d}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0%,#3b0f63,transparent 50%),radial-gradient(circle at 90% 100%,#5c0b3d,transparent 50%),var(--bg);color:var(--txt);font-family:system-ui,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;padding:24px 16px}
+  .wrap{width:100%;max-width:560px}
+  h1{font-size:clamp(32px,8vw,52px);margin:0 0 4px;text-align:center;background:linear-gradient(90deg,var(--gold),var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
+  .sub{text-align:center;color:var(--muted);margin-bottom:20px}
+  .card{background:var(--card);border:1px solid #ffffff1a;border-radius:18px;padding:20px;box-shadow:0 10px 40px #0007}
+  .row{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-bottom:14px}
+  .row b{color:var(--gold)}
+  button{font:inherit;cursor:pointer;border:0;border-radius:12px}
+  .play{display:flex;align-items:center;justify-content:center;width:96px;height:96px;margin:6px auto 12px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--pink));color:#1a0630;font-size:38px;box-shadow:0 0 30px #ff3fa466}
+  .play:active{transform:scale(.95)}
+  .bar{height:10px;background:#ffffff14;border-radius:6px;overflow:hidden;position:relative;margin-bottom:6px}
+  .bar .lim{position:absolute;top:0;bottom:0;left:0;background:#ffffff22}
+  .bar .pos{position:absolute;top:0;bottom:0;left:0;background:var(--gold);width:0}
+  .stage{text-align:center;color:var(--muted);font-size:13px;margin-bottom:12px}
+  .more{display:block;margin:0 auto 16px;background:#ffffff14;color:var(--txt);padding:8px 14px;font-size:14px}
+  .more:disabled{opacity:.4;cursor:default}
+  .gform input{width:100%;padding:14px;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:var(--txt);font:inherit;font-size:17px;outline:none}
+  .gform input:focus{border-color:var(--gold)}
+  .acwrap{position:relative}
+  .sugg{position:absolute;left:0;right:0;bottom:calc(100% + 6px);max-height:260px;overflow-y:auto;background:#2a1247;border:1px solid #ffffff2a;border-radius:12px;box-shadow:0 10px 30px #000a;z-index:5}
+  .sg{padding:10px 14px;cursor:pointer;border-bottom:1px solid #ffffff10;font-size:15px}
+  .sg:last-child{border-bottom:0}
+  .sg small{color:var(--muted);margin-left:6px}
+  .sg mark{background:none;color:var(--gold);font-weight:700}
+  .sg.act,.sg:hover{background:#ffffff1a}
+  .gbtns{display:flex;gap:10px;margin-top:10px}
+  .gbtns .more{margin:0;flex:1;padding:12px}
+  .go{flex:1;padding:12px;background:var(--gold);color:#1a0630;font-weight:800}
+  .gform button:disabled,.gform input:disabled{opacity:.4;cursor:default}
+  .tries{display:grid;gap:6px;margin-top:12px}
+  .try{padding:8px 12px;border-radius:10px;background:#ff4d4d22;border:1px solid #ff4d4d55;font-size:14px}
+  .try.skip{background:#ffffff0c;border-color:#ffffff22;color:var(--muted)}
+  .opts{display:grid;gap:10px}
+  .opt{background:#ffffff10;color:var(--txt);padding:14px;text-align:left;border:1px solid #ffffff1a}
+  .opt:hover:not(:disabled){background:#ffffff1f}
+  .opt small{display:block;color:var(--muted);margin-top:2px}
+  .opt.ok{background:#2ecc7133;border-color:var(--ok)}
+  .opt.bad{background:#ff4d4d33;border-color:var(--bad)}
+  .reveal{display:flex;gap:12px;align-items:center;margin-top:16px}
+  .reveal img{width:72px;height:72px;border-radius:10px}
+  .msg{font-weight:700;font-size:18px}
+  .next,.start{display:block;width:100%;margin-top:16px;padding:14px;background:linear-gradient(90deg,var(--gold),var(--pink));color:#1a0630;font-weight:800;font-size:17px}
+  .center{text-align:center}
+  .big{font-size:56px;font-weight:900;color:var(--gold);margin:8px 0}
+  .hidden{display:none!important}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:14px 0}
+  .chip{background:#ffffff12;padding:5px 10px;border-radius:20px;font-size:13px;color:var(--muted)}
+  .chip input{margin-right:4px}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ghicește Maneaua</h1>
+  <div class="sub">Ascultă și ghicește maneaua, frate! 🎶</div>
+
+  <div class="card" id="home">
+    <div class="center">Alege artiștii:</div>
+    <div class="chips" id="artists"></div>
+    <div class="center" style="color:var(--muted);font-size:14px">10 runde · clip de 1s → 16s · cu cât ghicești mai repede, cu atât mai multe puncte</div>
+    <button class="start" id="startBtn">Dă-i drumul! 🔥</button>
+    <div class="center" id="loadMsg" style="margin-top:10px;color:var(--muted)"></div>
+  </div>
+
+  <div class="card hidden" id="game">
+    <div class="row"><span>Runda <b id="rnd">1</b>/10</span><span>Scor: <b id="score">0</b></span></div>
+    <button class="play" id="playBtn">▶</button>
+    <div class="bar"><div class="lim" id="lim"></div><div class="pos" id="pos"></div></div>
+    <div class="stage" id="stageTxt"></div>
+    <form id="guessForm" class="gform" autocomplete="off">
+      <div class="acwrap">
+        <input id="guessIn" placeholder="Scrie numele manelei..." autocomplete="off" spellcheck="false">
+        <div class="sugg hidden" id="sugg"></div>
+      </div>
+      <div class="gbtns"><button type="button" class="more" id="moreBtn">Sari (+ mai mult)</button><button type="submit" class="go">Ghicește</button></div>
+    </form>
+    <div class="tries" id="tries"></div>
+    <div class="reveal hidden" id="reveal"><img id="cover" alt=""><div><div class="msg" id="msg"></div><div id="answer"></div></div></div>
+    <button class="next hidden" id="nextBtn">Următoarea →</button>
+  </div>
+
+  <div class="card hidden center" id="end">
+    <div>Scor final</div>
+    <div class="big" id="final">0</div>
+    <div id="verdict" style="font-size:18px"></div>
+    <button class="start" id="againBtn">Încă o tură 🔁</button>
+  </div>
+
+  <div class="foot">Clipuri audio de 30s furnizate de Deezer.</div>
+</div>
+
+<audio id="audio" preload="auto"></audio>
+
+<script>
+const ARTISTS = [
+  {name:"Florin Salam", id:95107},
+  {name:"Nicolae Guță", id:4101262},
+  {name:"Adrian Minune", id:94937},
+  {name:"Babi Minune", id:3817211},
+  {name:"Dani Mocanu", id:7694944},
+  {name:"Jador", id:120931742},
+  {name:"Costel Biju", id:4349137},
+  {name:"Vali Vijelie", id:446436},
+  {name:"Liviu Guță", id:446441},
+  {name:"Copilul de Aur", id:445362},
+  {name:"Susanu", id:4321678},
+  {name:"Leo de la Kuweit", id:57278952},
+];
+const STAGES = [1, 2, 4, 8, 16];   // secunde
+const POINTS = [5, 4, 3, 2, 1];
+const ROUNDS = 10;
+
+const $ = id => document.getElementById(id);
+const audio = $("audio");
+let pool = [], rounds = [], r = 0, stage = 0, score = 0, answered = false, stopTimer = null, raf = null;
+
+// artist checkboxes
+$("artists").innerHTML = ARTISTS.map((a,i)=>`<label class="chip"><input type="checkbox" data-i="${i}" checked>${a.name}</label>`).join("");
+
+function jsonp(url){
+  return new Promise((res, rej) => {
+    const cb = "dz" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const t = setTimeout(()=>{cleanup(); rej(new Error("timeout"));}, 10000);
+    function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = d => { cleanup(); res(d); };
+    s.onerror = () => { cleanup(); rej(new Error("net")); };
+    s.src = url + (url.includes("?")?"&":"?") + "output=jsonp&callback=" + cb;
+    document.body.appendChild(s);
+  });
+}
+
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\(.*?\)|\[.*?\]/g,"").replace(/[^a-z0-9]/g,"");
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+async function loadPool(selected){
+  const results = await Promise.allSettled(selected.map(a => jsonp(`https://api.deezer.com/artist/${a.id}/top?limit=25`)));
+  const seen = new Set(), out = [];
+  results.forEach((r,i) => {
+    if (r.status !== "fulfilled" || !r.value.data) return;
+    r.value.data.forEach(t => {
+      if (!t.preview || !t.readable) return;
+      const key = norm(t.title_short);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      out.push({title:t.title_short, artist:t.artist.name, preview:t.preview, cover:t.album.cover_medium});
+    });
+  });
+  return out;
+}
+
+async function start(){
+  const sel = [...document.querySelectorAll("#artists input:checked")].map(c => ARTISTS[c.dataset.i]);
+  if (!sel.length){ $("loadMsg").textContent = "Alege măcar un artist, șefu'!"; return; }
+  $("startBtn").disabled = true; $("loadMsg").textContent = "Încarc manelele...";
+  try { pool = await loadPool(sel); } catch(e){ pool = []; }
+  $("startBtn").disabled = false;
+  if (pool.length < 4){ $("loadMsg").textContent = "N-am găsit destule manele. Verifică netul sau alege mai mulți artiști."; return; }
+  $("loadMsg").textContent = "";
+  rounds = shuffle([...pool]).slice(0, Math.min(ROUNDS, pool.length));
+  r = 0; score = 0;
+  $("home").classList.add("hidden"); $("end").classList.add("hidden"); $("game").classList.remove("hidden");
+  setupRound();
+}
+
+function setupRound(){
+  stopAudio();
+  const song = rounds[r];
+  stage = 0; answered = false;
+  $("rnd").textContent = r+1; $("score").textContent = score;
+  $("reveal").classList.add("hidden"); $("nextBtn").classList.add("hidden");
+  audio.src = song.preview; audio.load();
+  $("tries").innerHTML = "";
+  $("guessIn").value = ""; $("guessIn").disabled = false;
+  $("guessForm").querySelector(".go").disabled = false;
+  updateStage();
+  $("guessIn").focus();
+}
+
+function lev(a, b){
+  const d = Array.from({length:a.length+1}, (_, i) => [i]);
+  for (let j=1;j<=b.length;j++) d[0][j] = j;
+  for (let i=1;i<=a.length;i++) for (let j=1;j<=b.length;j++)
+    d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+  return d[a.length][b.length];
+}
+// acceptă diacritice lipsă, majuscule, mici greșeli de tastare
+function matches(input, title){
+  const g = norm(input), t = norm(title);
+  if (!g) return false;
+  if (g === t) return true;
+  if (lev(g, t) <= Math.max(1, Math.floor(t.length * 0.2))) return true;
+  return t.length >= 8 && g.length >= t.length * 0.7 && t.includes(g);
+}
+
+function addTry(text, skip){
+  const d = document.createElement("div");
+  d.className = "try" + (skip ? " skip" : "");
+  d.textContent = skip ? "⏭ Sărit" : "✗ " + text;
+  $("tries").appendChild(d);
+}
+
+function submitGuess(e){
+  e.preventDefault();
+  hideSugg();
+  if (answered) return;
+  const v = $("guessIn").value.trim();
+  if (!v) return;
+  if (matches(v, rounds[r].title)) return reveal(true);
+  addTry(v, false);
+  $("guessIn").value = "";
+  advance();
+}
+function skip(){
+  if (answered) return;
+  addTry("", true);
+  advance();
+}
+function advance(){
+  if (stage >= STAGES.length-1) return reveal(false);
+  stage++; updateStage(); play();
+  $("guessIn").focus();
+}
+
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function updateStage(){
+  const lim = answered ? 30 : STAGES[stage];
+  $("lim").style.width = (lim/16*100 > 100 ? 100 : lim/16*100) + "%";
+  $("stageTxt").textContent = answered ? "Ascultă toată maneaua 🎧" : `Încercarea ${stage+1}/${STAGES.length} · clip ${STAGES[stage]}s · valorează ${POINTS[stage]} puncte`;
+  $("moreBtn").disabled = answered;
+  $("moreBtn").textContent = stage >= STAGES.length-1 ? "Mă dau bătut" : "Sari (+ mai mult)";
+}
+
+function play(){
+  stopAudio();
+  const lim = answered ? 30 : STAGES[stage];
+  audio.currentTime = 0;
+  audio.play().catch(()=>{});
+  $("playBtn").textContent = "■";
+  stopTimer = setTimeout(stopAudio, lim*1000);
+  const tick = () => { $("pos").style.width = Math.min(audio.currentTime/(answered?30:16)*100,100) + "%"; raf = requestAnimationFrame(tick); };
+  tick();
+}
+function stopAudio(){
+  clearTimeout(stopTimer); cancelAnimationFrame(raf);
+  audio.pause();
+  $("playBtn").textContent = "▶";
+}
+
+function reveal(ok){
+  if (answered) return;
+  answered = true;
+  const song = rounds[r];
+  $("guessIn").disabled = true;
+  $("guessForm").querySelector(".go").disabled = true;
+  const pts = ok ? POINTS[stage] : 0;
+  score += pts; $("score").textContent = score;
+  $("msg").textContent = ok ? `Bravo, șmecherule! +${pts} 🔥` : "Ai dat-o-n bară! 😅";
+  $("msg").style.color = ok ? "var(--ok)" : "var(--bad)";
+  $("answer").textContent = `${song.artist} – ${song.title}`;
+  $("cover").src = song.cover;
+  $("reveal").classList.remove("hidden");
+  $("nextBtn").textContent = r === rounds.length-1 ? "Vezi scorul 🏆" : "Următoarea →";
+  $("nextBtn").classList.remove("hidden");
+  updateStage();
+  play();
+}
+
+function next(){
+  r++;
+  if (r >= rounds.length) return finish();
+  setupRound();
+}
+
+function finish(){
+  stopAudio();
+  $("game").classList.add("hidden"); $("end").classList.remove("hidden");
+  const max = rounds.length * POINTS[0];
+  $("final").textContent = `${score}/${max}`;
+  const p = score/max;
+  $("verdict").textContent = p >= .8 ? "Ești regele nunților! 👑" : p >= .5 ? "Te descurci, ai fost la câteva botezuri 🥂" : p >= .2 ? "Mai ascultă Salam pe drum 🚗" : "Tu asculți doar muzică clasică, recunoaște 🎻";
+}
+
+$("startBtn").onclick = start;
+$("againBtn").onclick = () => { $("end").classList.add("hidden"); $("home").classList.remove("hidden"); };
+$("playBtn").onclick = () => audio.paused ? play() : stopAudio();
+// ---- sugestii (autocomplete) ----
+let suggItems = [], suggIdx = -1;
+const plain = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function hl(title, q){
+  const i = plain(title).indexOf(q);
+  if (i < 0 || !q) return esc(title);
+  return esc(title.slice(0,i)) + "<mark>" + esc(title.slice(i,i+q.length)) + "</mark>" + esc(title.slice(i+q.length));
+}
+function hideSugg(){ $("sugg").classList.add("hidden"); suggItems = []; suggIdx = -1; }
+function renderSugg(){
+  const q = plain($("guessIn").value).trim();
+  if (q.length < 1 || answered){ hideSugg(); return; }
+  const words = q.split(/\s+/);
+  suggItems = pool
+    .filter(s => { const h = plain(s.title + " " + s.artist); return words.every(w => h.includes(w)); })
+    .sort((a,b) => (plain(a.title).startsWith(q)?0:1) - (plain(b.title).startsWith(q)?0:1) || a.title.localeCompare(b.title))
+    .slice(0, 8);
+  suggIdx = -1;
+  if (!suggItems.length){ hideSugg(); return; }
+  $("sugg").innerHTML = suggItems.map((s,i) => `<div class="sg" data-i="${i}">${hl(s.title,q)}<small>${esc(s.artist)}</small></div>`).join("");
+  $("sugg").classList.remove("hidden");
+}
+function pickSugg(i){
+  $("guessIn").value = suggItems[i].title;
+  hideSugg();
+  $("guessIn").focus();
+}
+$("guessIn").addEventListener("input", renderSugg);
+$("guessIn").addEventListener("keydown", e => {
+  if ($("sugg").classList.contains("hidden")) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp"){
+    e.preventDefault();
+    suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + suggItems.length) % suggItems.length;
+    [...$("sugg").children].forEach((d,i) => d.classList.toggle("act", i === suggIdx));
+    $("sugg").children[suggIdx].scrollIntoView({block:"nearest"});
+  } else if (e.key === "Enter" && suggIdx >= 0){
+    e.preventDefault(); pickSugg(suggIdx);
+  } else if (e.key === "Escape"){ hideSugg(); }
+});
+$("sugg").addEventListener("mousedown", e => {
+  const d = e.target.closest(".sg"); if (!d) return;
+  e.preventDefault(); pickSugg(+d.dataset.i);
+});
+$("guessIn").addEventListener("blur", () => setTimeout(hideSugg, 100));
+
+$("moreBtn").onclick = skip;
+$("guessForm").onsubmit = submitGuess;
+$("nextBtn").onclick = next;
+</script>
+</body>
+</html>
