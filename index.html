@@ -25,6 +25,22 @@
   .more:disabled{opacity:.4;cursor:default}
   .gform input{width:100%;padding:14px;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:var(--txt);font:inherit;font-size:17px;outline:none}
   .gform input:focus{border-color:var(--gold)}
+  .saveform{display:flex;gap:8px;margin-top:18px}
+  .saveform input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:var(--txt);font:inherit;outline:none}
+  .saveform input:focus{border-color:var(--gold)}
+  .saveform .go{flex:0 0 auto;padding:12px 16px}
+  .saveform button:disabled,.saveform input:disabled{opacity:.5;cursor:default}
+  .note{font-size:12px;color:var(--muted);margin-top:6px}
+  .board{margin-top:20px;text-align:left}
+  .bt{font-weight:800;color:var(--gold);margin-bottom:8px;text-align:center}
+  .board ol{margin:0;padding:0;list-style:none;counter-reset:n}
+  .board li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:#ffffff0a;margin-bottom:5px;counter-increment:n}
+  .board li::before{content:counter(n) ".";color:var(--muted);width:28px}
+  .board li span:first-of-type{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .board li b{color:var(--gold)}
+  .board li.empty{justify-content:center;color:var(--muted)}
+  .board li.empty::before{content:none}
+  .board li.me{outline:1px solid var(--gold)}
   .acwrap{position:relative}
   .sugg{position:absolute;left:0;right:0;bottom:calc(100% + 6px);max-height:260px;overflow-y:auto;background:#2a1247;border:1px solid #ffffff2a;border-radius:12px;box-shadow:0 10px 30px #000a;z-index:5}
   .sg{padding:10px 14px;cursor:pointer;border-bottom:1px solid #ffffff10;font-size:15px}
@@ -69,6 +85,7 @@
     <div class="center" style="color:var(--muted);font-size:14px">10 runde · clip de 1s → 16s · cu cât ghicești mai repede, cu atât mai multe puncte</div>
     <button class="start" id="startBtn">Dă-i drumul! 🔥</button>
     <div class="center" id="loadMsg" style="margin-top:10px;color:var(--muted)"></div>
+    <div class="board"><div class="bt">🏆 Top 10 manelari</div><ol id="boardHome"><li class="empty">Se încarcă...</li></ol></div>
   </div>
 
   <div class="card hidden" id="game">
@@ -92,7 +109,13 @@
     <div>Scor final</div>
     <div class="big" id="final">0</div>
     <div id="verdict" style="font-size:18px"></div>
+    <form id="saveForm" class="saveform" autocomplete="off">
+      <input id="nameIn" maxlength="20" placeholder="Numele tău pentru clasament" spellcheck="false">
+      <button type="submit" class="go" id="saveBtn">Salvează</button>
+    </form>
+    <div class="note" id="saveMsg">Numele și scorul apar public în clasament.</div>
     <button class="start" id="againBtn">Încă o tură 🔁</button>
+    <div class="board"><div class="bt">🏆 Top 10 manelari</div><ol id="boardEnd"><li class="empty">Se încarcă...</li></ol></div>
   </div>
 
   <div class="foot">Clipuri audio de 30s furnizate de Deezer.</div>
@@ -296,7 +319,50 @@ function finish(){
   track("joc-terminat", `Scor ${score}/${max}`);
   const p = score/max;
   $("verdict").textContent = p >= .8 ? "Ești regele nunților! 👑" : p >= .5 ? "Te descurci, ai fost la câteva botezuri 🥂" : p >= .2 ? "Mai ascultă Salam pe drum 🚗" : "Tu asculți doar muzică clasică, recunoaște 🎻";
+  $("nameIn").disabled = false; $("saveBtn").disabled = false;
+  $("saveMsg").textContent = "Numele și scorul apar public în clasament.";
+  try { $("nameIn").value = localStorage.getItem("gm-name") || ""; } catch(e){}
+  loadBoard();
 }
+
+// ---- clasament (Google Sheet prin Apps Script) ----
+const BOARD_URL = "https://script.google.com/macros/s/AKfycbwVMYtOEghRznyanYi_GYGw42mkeWZ26TDqldhb0CWEFeIhvpNKU6xBoFA9ztMwedKtpA/exec";
+let myName = "";
+
+function renderBoard(top){
+  const html = top && top.length
+    ? top.map(t => `<li class="${t.name === myName ? "me" : ""}"><span>${esc(t.name)}</span><b>${t.score}</b></li>`).join("")
+    : `<li class="empty">${top ? "Fii primul în clasament!" : "Clasamentul nu se poate încărca acum."}</li>`;
+  $("boardHome").innerHTML = html; $("boardEnd").innerHTML = html;
+}
+async function loadBoard(){
+  try {
+    const res = await fetch(BOARD_URL + "?t=" + Date.now());
+    const d = await res.json();
+    renderBoard(d.top || []);
+  } catch(e){ renderBoard(null); }
+}
+async function saveScore(e){
+  e.preventDefault();
+  const name = $("nameIn").value.replace(/[<>]/g, "").trim().slice(0, 20);
+  if (!name){ $("saveMsg").textContent = "Scrie un nume, șefu'!"; return; }
+  $("nameIn").disabled = true; $("saveBtn").disabled = true;
+  $("saveMsg").textContent = "Se salvează...";
+  try { localStorage.setItem("gm-name", name); } catch(err){}
+  myName = name;
+  try {
+    await fetch(BOARD_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain"}, body: JSON.stringify({name, score}) });
+    $("saveMsg").textContent = "Salvat! 🔥";
+    track("scor-salvat", `${name}: ${score}`);
+  } catch(err){
+    $("saveMsg").textContent = "Nu s-a putut salva. Mai încearcă.";
+    $("nameIn").disabled = false; $("saveBtn").disabled = false;
+    return;
+  }
+  setTimeout(loadBoard, 1200);
+}
+$("saveForm").onsubmit = saveScore;
+loadBoard();
 
 $("startBtn").onclick = start;
 $("againBtn").onclick = () => { $("end").classList.add("hidden"); $("home").classList.remove("hidden"); };
