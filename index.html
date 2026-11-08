@@ -82,7 +82,7 @@
   <div class="card" id="home">
     <div class="center">Alege artiștii:</div>
     <div class="chips" id="artists"></div>
-    <div class="center" style="color:var(--muted);font-size:14px">10 runde · clip de 1s → 16s · cu cât ghicești mai repede, cu atât mai multe puncte</div>
+    <div class="center" style="color:var(--muted);font-size:14px">10 runde · clip de 1s → 16s · 1 punct pentru fiecare manea ghicită</div>
     <button class="start" id="startBtn">Dă-i drumul! 🔥</button>
     <div class="center" id="loadMsg" style="margin-top:10px;color:var(--muted)"></div>
     <div class="board"><div class="bt">🏆 Top 10 manelari</div><ol id="boardHome"><li class="empty">Se încarcă...</li></ol></div>
@@ -139,7 +139,7 @@ const ARTISTS = [
   {name:"Leo de la Kuweit", id:57278952},
 ];
 const STAGES = [1, 2, 4, 8, 16];   // secunde
-const POINTS = [5, 4, 3, 2, 1];
+const POINTS = [1, 1, 1, 1, 1]; // 1 punct pe manea, oricâte încercări
 const ROUNDS = 10;
 
 const $ = id => document.getElementById(id);
@@ -260,7 +260,7 @@ const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'
 function updateStage(){
   const lim = answered ? 30 : STAGES[stage];
   $("lim").style.width = (lim/16*100 > 100 ? 100 : lim/16*100) + "%";
-  $("stageTxt").textContent = answered ? "Ascultă toată maneaua 🎧" : `Încercarea ${stage+1}/${STAGES.length} · clip ${STAGES[stage]}s · valorează ${POINTS[stage]} puncte`;
+  $("stageTxt").textContent = answered ? "Ascultă toată maneaua 🎧" : `Încercarea ${stage+1}/${STAGES.length} · clip ${STAGES[stage]}s`;
   $("moreBtn").disabled = answered;
   $("moreBtn").textContent = stage >= STAGES.length-1 ? "Mă dau bătut" : "Sari (+ mai mult)";
 }
@@ -289,7 +289,7 @@ function reveal(ok){
   $("guessForm").querySelector(".go").disabled = true;
   const pts = ok ? POINTS[stage] : 0;
   score += pts; $("score").textContent = score;
-  $("msg").textContent = ok ? `Bravo, șmecherule! +${pts} 🔥` : "Ai dat-o-n bară! 😅";
+  $("msg").textContent = ok ? `Bravo, șmecherule! +1 🔥` : "Ai dat-o-n bară! 😅";
   $("msg").style.color = ok ? "var(--ok)" : "var(--bad)";
   $("answer").textContent = `${song.artist} – ${song.title}`;
   $("cover").src = song.cover;
